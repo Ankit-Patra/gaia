@@ -1,32 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function Pokedex() {
-  const [pokemon, setPokemon] = useState([]);
+function PokemonCard({ pokemon }) {
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch('https://pokeapi.co/api/v2/pokemon?limit=150')
-      .then(res => res.json())
-      .then(data => setPokemon(data.results));
-  }, []);
+  const handleCardClick = () => {
+    navigate(`/pokemon/${pokemon.id}`);
+  };
 
   return (
-    <div>
-      <h1>Pokedex</h1>
-      <div className="pokemon-list">
-        {pokemon.map((poke, index) => (
-          <PokemonCard key={index} name={poke.name} url={poke.url} />
-        ))}
+    <div className="pokemon-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
+      <h3>{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h3>
+      <p>National Dex: #{pokemon.id}</p>
+      <img src={pokemon.sprites.front_default} alt={pokemon.name} />
+      <div>
+        <strong>Type:</strong> {pokemon.types.map(type => type.type.name).join(', ')}
       </div>
     </div>
   );
 }
 
-function PokemonCard({ name, url }) {
-  return (
-    <div className="pokemon-card">
-      <h3>{name}</h3>
-      {/* Fetch additional details like images/stats if needed */}
-    </div>
-  );
-}
-export default Pokedex;
+export default PokemonCard;
