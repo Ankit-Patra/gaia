@@ -4,7 +4,7 @@ import Pokedex from './components/PokeDex';
 import WeaknessChart from './components/WeaknessChart';
 import Contact from './components/Contact';
 import Header from './components/Header';
-import PokemonDetail from './components/PokemonDetails';
+import PokemonDetails from './components/PokemonDetails';
 
 function App() {
   return (
@@ -16,7 +16,8 @@ function App() {
           <Route path="/pokedex" element={<Pokedex />} />
           <Route path="/weakness-chart" element={<WeaknessChart />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/pokemon/:id" element={<PokemonDetail />} />
+          {/* Route for Pokémon details, expecting an ID */}
+          <Route path="/pokemon/:id" element={<PokemonDetails />} />
         </Routes>
       </div>
     </Router>

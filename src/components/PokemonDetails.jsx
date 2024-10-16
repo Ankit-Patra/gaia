@@ -1,115 +1,109 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Tabs from './Tabs';
-import EvolutionChart from './EvolutionChart';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Tabs from './Tabs'; // Import Tabs component
 
-function PokemonDetail() {
-  const { id } = useParams();  // Get Pokemon ID from the URL
-  const [pokemon, setPokemon] = useState(null);
-  const [speciesData, setSpeciesData] = useState(null);
-  const [availableForms, setAvailableForms] = useState([]);  // Track all available forms (base, mega, alolan, etc.)
-  const [form, setForm] = useState('base');  // Track selected form
-  const [currentPokemon, setCurrentPokemon] = useState(null);  // Current form data
-  const navigate = useNavigate();
+const PokemonDetails = () => {
+    const { id: pokemonId } = useParams(); // Fetch pokemonId from URL params
+    const [pokemon, setPokemon] = useState(null);
+    const [availableForms, setAvailableForms] = useState([]);
+    const [currentForm, setCurrentForm] = useState({ name: 'Base Form', url: `https://pokeapi.co/api/v2/pokemon/${pokemonId}` }); // Default to base form
 
-  useEffect(() => {
-    // Fetch Pokemon data for the base form
-    fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setPokemon(data);
-        setCurrentPokemon(data);  // Initially show base form
-      });
+    useEffect(() => {
+        const fetchData = async (url) => {
+            if (!url) return;
 
-    // Fetch Pokemon species data (contains evolution chain and form data)
-    fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setSpeciesData(data);
-        // Check for all available forms
-        checkForAlternateForms(data.varieties);
-      });
-  }, [id]);
+            console.log("Fetching Pokémon data from URL:", url); // Log the URL
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log("API Response:", data); // Log the Pokémon data
+                setPokemon(data);
+            } catch (error) {
+                console.error("Error fetching Pokémon data:", error);
+            }
+        };
 
-  // Function to check for all forms (mega, regional, etc.)
-// Function to check for alternate forms (excluding cosmetic forms)
-const checkForAlternateForms = (varieties) => {
-    const forms = [];
-    
-    varieties.forEach(variety => {
-      const formName = variety.pokemon.name;
-      
-      // Filtering relevant forms
-      if (formName.includes('gmax')) {
-        forms.push({ name: 'GMAX Form', url: variety.pokemon.url });
-      } else if (formName.includes('alola')) {
-        forms.push({ name: 'Alolan Form', url: variety.pokemon.url });
-      } else if (formName.includes('galar')) {
-        forms.push({ name: 'Galarian Form', url: variety.pokemon.url });
-      } else if (formName.includes('hisui')) {
-        forms.push({ name: 'Hisuian Form', url: variety.pokemon.url });
-      } else if (formName.includes('mega')) {
-        forms.push({ name: 'Mega Evolution', url: variety.pokemon.url });
-      } else if (formName === pokemon.name) {
-        // Always include the base form
-        forms.push({ name: 'Base Form', url: variety.pokemon.url });
-      }
-  
-      // Discard cosmetic forms like Pikachu's cap forms
-      if (formName.includes('cap') || formName.includes('costume')) {
-        return;
-      }
-    });
-  
-    setAvailableForms(forms);
-  };
-  
+        // Fetch Pokémon data for the current form
+        fetchData(currentForm.url);
+    }, [currentForm]);
 
-  // Fetch data for the selected form
-  const handleFormChange = (formName, formUrl) => {
-    setForm(formName);
-    fetch(formUrl)
-      .then(res => res.json())
-      .then(data => setCurrentPokemon(data));
-  };
+    useEffect(() => {
+        const fetchSpeciesData = async () => {
+            if (!pokemonId) {
+                console.warn("No valid pokemonId provided.");
+                return; // Exit early if pokemonId is not defined
+            }
 
-  if (!pokemon || !speciesData || !currentPokemon) return <div>Loading...</div>;
+            console.log("Fetching Pokémon species data for ID:", pokemonId); // Log the pokemonId
+            try {
+                // Fetch species details for varieties
+                const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}/`);
+                if (!speciesResponse.ok) {
+                    throw new Error(`HTTP error! status: ${speciesResponse.status}`);
+                }
+                const speciesData = await speciesResponse.json();
+                console.log("Species Data (Varieties):", speciesData); // Log the species data
+                
+                checkForAlternateForms(speciesData.varieties); // Call to check alternate forms
+            } catch (error) {
+                console.error("Error fetching Pokémon species data:", error);
+            }
+        };
 
-  return (
-    <div className="pokemon-detail">
-      {/* Tabs for all available forms */}
-      <Tabs 
-        currentForm={form} 
-        setForm={handleFormChange} 
-        forms={availableForms} 
-      />
+        fetchSpeciesData();
+    }, [pokemonId]);
 
-      {/* Main Pokemon Information */}
-      <h1>{currentPokemon.name.toUpperCase()}</h1>
-      <img src={currentPokemon.sprites.front_default} alt={currentPokemon.name} />
-      <p>National Dex: #{currentPokemon.id}</p>
-      <p>Type: {currentPokemon.types.map(type => type.type.name).join(', ')}</p>
+    const checkForAlternateForms = (varieties) => {
+        if (!Array.isArray(varieties)) {
+            console.warn("Varieties is not an array:", varieties);
+            return;
+        }
 
-      {/* Stats and Abilities for the current form */}
-      <h2>Base Stats</h2>
-      <ul>
-        {currentPokemon.stats.map(stat => (
-          <li key={stat.stat.name}>
-            {stat.stat.name}: {stat.base_stat}
-          </li>
-        ))}
-      </ul>
-      <h2>Abilities</h2>
-      <ul>
-        {currentPokemon.abilities.map(ability => (
-          <li key={ability.ability.name}>{ability.ability.name}</li>
-        ))}
-      </ul>
+        const forms = varieties
+            .filter(variety => variety && variety.pokemon)
+            .map(variety => {
+                const formName = variety.pokemon.name;
+                console.log(`Checking variety: ${formName}`);  // Log each form being checked
 
-      {/* Evolution Chart */}
-      <EvolutionChart speciesData={speciesData} onPokemonClick={navigate} />
-    </div>
-  );
-}
+                // Adding conditions for various forms
+                if (formName.includes('gmax')) return { name: 'GMAX Form', url: variety.pokemon.url };
+                if (formName.includes('mega-x')) return { name: 'Mega X Form', url: variety.pokemon.url }; // Modify if necessary
+                if (formName.includes('mega-y')) return { name: 'Mega Y Form', url: variety.pokemon.url }; // Modify if necessary
+                if (formName.includes('alola')) return { name: 'Alolan Form', url: variety.pokemon.url };
+                if (formName.includes('galar')) return { name: 'Galarian Form', url: variety.pokemon.url };
+                if (formName.includes('hisui')) return { name: 'Hisuian Form', url: variety.pokemon.url };
+                return null;  
+            }).filter(Boolean); 
 
-export default PokemonDetail;
+        console.log("Forms found:", forms); // Log the found forms
+
+        forms.unshift({ name: 'Base Form', url: `https://pokeapi.co/api/v2/pokemon/${pokemonId}` });
+        setAvailableForms(forms);
+    };
+
+    const handleFormChange = (name, url) => {
+        console.log(`Switching to form: ${name} (${url})`);
+        setCurrentForm({ name, url }); // Set the current form to the selected form
+    };
+
+    return (
+        <div>
+            {pokemon ? (
+                <div>
+                    <h2>{pokemon.name} ({currentForm.name})</h2>
+                    <img src={pokemon.sprites.front_default} alt={pokemon.name} />
+                    <h3>Available Forms:</h3>
+                    <Tabs currentForm={currentForm.name} setForm={handleFormChange} forms={availableForms} />
+                    {/* Additional Pokémon details can be rendered here */}
+                </div>
+            ) : (
+                <p>Loading Pokémon details...</p>
+            )}
+        </div>
+    );
+};
+
+export default PokemonDetails;
