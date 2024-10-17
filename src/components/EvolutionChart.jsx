@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import EvolutionItem from './EvolutionItem';
+import EvolutionArrow from './EvolutionArrow';
 
 function EvolutionChart({ speciesData, onPokemonClick }) {
   const [evolution, setEvolution] = useState(null);
@@ -12,7 +14,6 @@ function EvolutionChart({ speciesData, onPokemonClick }) {
   }, [speciesData]);
 
   useEffect(() => {
-    // Function to fetch evolutions and update state
     const getEvolutions = async (chain) => {
       const evolutions = [];
       let current = chain;
@@ -41,13 +42,6 @@ function EvolutionChart({ speciesData, onPokemonClick }) {
     }
   }, [evolution]);
 
-  const formatTrigger = (trigger) => {
-    if (!trigger) return 'Initial Stage';
-    if (trigger.trigger.name === 'level-up') return `Level ${trigger.min_level}`;
-    if (trigger.trigger.name === 'use-item') return `Use ${trigger.item.name}`;
-    return 'Special Condition';
-  };
-
   if (!evolution) return <div>Loading Evolution Chain...</div>;
 
   return (
@@ -56,16 +50,8 @@ function EvolutionChart({ speciesData, onPokemonClick }) {
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {evolutionChain.map((evo, index) => (
           <div key={evo.id} style={{ display: 'flex', alignItems: 'center' }}>
-            <div onClick={() => onPokemonClick(`/pokemon/${evo.id}`)} style={{ textAlign: 'center', cursor: 'pointer' }}>
-              <img src={evo.sprite} alt={evo.name} style={{ width: '100px' }} />
-              <p>{evo.name.charAt(0).toUpperCase() + evo.name.slice(1)}</p>
-              <p>{formatTrigger(evo.trigger)}</p>
-            </div>
-            {index < evolutionChain.length - 1 && (
-              <div style={{ margin: '0 10px' }}>
-                <p style={{ fontSize: '24px' }}>→</p> {/* Arrow between evolutions */}
-              </div>
-            )}
+            <EvolutionItem evo={evo} onPokemonClick={onPokemonClick} />
+            {index < evolutionChain.length - 1 && <EvolutionArrow />}
           </div>
         ))}
       </div>
