@@ -48,12 +48,42 @@ function EvolutionChart({ speciesData, onPokemonClick }) {
     <div className="evolution-chart">
       <h2>Evolution Chain</h2>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        {evolutionChain.map((evo, index) => (
-          <div key={evo.id} style={{ display: 'flex', alignItems: 'center' }}>
-            <EvolutionItem evo={evo} onPokemonClick={onPokemonClick} />
-            {index < evolutionChain.length - 1 && <EvolutionArrow />}
-          </div>
-        ))}
+        {evolutionChain.length === 3 ? (
+          // If there are exactly 3 evolutions, display them all in a row
+          evolutionChain.map((evo, index) => (
+            <div key={evo.id} style={{ display: 'flex', alignItems: 'center' }}>
+              <EvolutionItem evo={evo} onPokemonClick={onPokemonClick} />
+              {index < evolutionChain.length - 1 && <EvolutionArrow />}
+            </div>
+          ))
+        ) : evolutionChain.length > 3 ? (
+          // Display first part of the evolution chain normally
+          <>
+            {evolutionChain.slice(0, -2).map((evo, index) => (
+              <div key={evo.id} style={{ display: 'flex', alignItems: 'center' }}>
+                <EvolutionItem evo={evo} onPokemonClick={onPokemonClick} />
+                {index < evolutionChain.length - 3 && <EvolutionArrow />}
+              </div>
+            ))}
+            {/* Separate last two evolutions in a column */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {evolutionChain.slice(-2).map((evo, index) => (
+                <div key={evo.id} style={{ display: 'flex', alignItems: 'center' }}>
+                  <EvolutionItem evo={evo} onPokemonClick={onPokemonClick} />
+                  {index < 1 && <EvolutionArrow />} {/* Only show arrow for the first of the last two */}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          // If there are 2 or fewer evolutions, display them normally
+          evolutionChain.map((evo, index) => (
+            <div key={evo.id} style={{ display: 'flex', alignItems: 'center' }}>
+              <EvolutionItem evo={evo} onPokemonClick={onPokemonClick} />
+              {index < evolutionChain.length - 1 && <EvolutionArrow />}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
